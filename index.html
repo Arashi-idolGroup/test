@@ -1,9 +1,608 @@
-<html>
-  <head>
-    <meta charset='utf-8'>
-    <title>タイトル</title>
-  </head>
-  <body>
-    <!-- ここに書きたい内容を書く -->
-  </body>
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>CSV読み込み・商品組み合わせ検索</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: "Segoe UI", "Hiragino Sans", sans-serif;
+                background: #f0f2f5;
+                color: #333;
+                min-height: 100vh;
+            }
+
+            /* ===== header ===== */
+            .header {
+                background: linear-gradient(135deg, #2c3e50, #4ca1af);
+                color: #fff;
+                padding: 20px;
+                text-align: center;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+                letter-spacing: 0.05em;
+            }
+            .header p {
+                margin-top: 5px;
+                font-size: 0.85rem;
+                opacity: 0.9;
+            }
+
+            /* ===== main ===== */
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+
+            /* ===== card ===== */
+            .card {
+                background: #fff;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            .card h2 {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+                padding-bottom: 8px;
+                border-bottom: 2px solid #4ca1af;
+                color: #2c3e50;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            /* ===== File Input ===== */
+            .file-area {
+                border: 2px dashed #ccc;
+                padding: 20px;
+                text-align: center;
+                border-radius: 8px;
+                background: #fafafa;
+                transition: 0.2s;
+            }
+            .file-area:hover {
+                background: #f0f8ff;
+                border-color: #4ca1af;
+            }
+            .file-area input[type="file"] {
+                display: none;
+            }
+            .file-label {
+                cursor: pointer;
+                display: inline-block;
+                padding: 10px 20px;
+                background: #4ca1af;
+                color: #fff;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            .file-msg {
+                display: block;
+                margin-top: 10px;
+                font-size: 0.9rem;
+                color: #666;
+            }
+
+            /* ===== Product List (Categories) ===== */
+            .category-group {
+                margin-bottom: 15px;
+                border: 1px solid #eee;
+                border-radius: 6px;
+                overflow: hidden;
+            }
+            .cat-header {
+                background: #eef2f5;
+                padding: 8px 12px;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                user-select: none;
+            }
+            .cat-header:hover {
+                background: #e0e6ed;
+            }
+            .cat-header input {
+                margin-right: 8px;
+                transform: scale(1.2);
+                cursor: pointer;
+            }
+
+            .cat-items {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 5px;
+                padding: 10px;
+                background: #fff;
+            }
+
+            .item-row {
+                display: flex;
+                align-items: center;
+                font-size: 0.9rem;
+                padding: 5px;
+                border-radius: 4px;
+                transition: 0.1s;
+            }
+            .item-row:hover {
+                background: #f5f5f5;
+            }
+            .item-row input {
+                margin-right: 8px;
+                cursor: pointer;
+            }
+            .item-row.inactive {
+                opacity: 0.5;
+                text-decoration: line-through;
+            }
+            .price-tag {
+                margin-left: auto;
+                color: #d35400;
+                font-weight: bold;
+            }
+
+            /* ===== Input & Button ===== */
+            .ctrl-row {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+            .ctrl-row input[type="number"] {
+                padding: 8px;
+                font-size: 1rem;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                width: 150px;
+            }
+            .btn-calc {
+                padding: 10px 24px;
+                background: #e67e22;
+                color: #fff;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+                cursor: pointer;
+                font-size: 1rem;
+            }
+            .btn-calc:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+            .btn-calc:hover:not(:disabled) {
+                background: #d35400;
+            }
+
+            /* ===== Result ===== */
+            .status-bar {
+                padding: 10px;
+                background: #f8f9fa;
+                border-radius: 4px;
+                margin-bottom: 10px;
+                font-weight: bold;
+                font-size: 0.9rem;
+            }
+            .result-list {
+                max-height: 400px;
+                overflow-y: auto;
+                border-top: 1px solid #eee;
+            }
+            .result-item {
+                padding: 8px 10px;
+                border-bottom: 1px solid #eee;
+                font-size: 0.9rem;
+            }
+            .idx {
+                background: #2c3e50;
+                color: #fff;
+                padding: 1px 6px;
+                border-radius: 3px;
+                font-size: 0.8rem;
+                margin-right: 5px;
+            }
+
+            /* Spinner */
+            .spinner {
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                border: 2px solid #333;
+                border-top-color: transparent;
+                border-radius: 50%;
+                animation: spin 0.6s linear infinite;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>📂 CSV 商品組み合わせ算出</h1>
+            <p>
+                複数のCSVファイルを読み込み、選択した商品で目標金額を探索します
+            </p>
+        </div>
+
+        <div class="container">
+            <!-- STEP 1: CSV読み込み -->
+            <div class="card">
+                <h2>1. 商品データの読み込み (CSV)</h2>
+                <div class="file-area">
+                    <label class="file-label">
+                        📂 CSVファイルを選択 (複数可)
+                        <input
+                            type="file"
+                            id="csvFiles"
+                            multiple
+                            accept=".csv"
+                            onchange="handleFiles(this.files)"
+                        />
+                    </label>
+                    <span class="file-msg" id="fileMsg"
+                        >※CSV形式: 「商品名, 金額」 (ヘッダーなし想定)</span
+                    >
+                </div>
+            </div>
+
+            <!-- STEP 2: 商品選択リスト -->
+            <div class="card">
+                <h2>
+                    2. 計算対象の選択
+                    <small style="font-size: 0.8rem; font-weight: normal">
+                        (選択中: <span id="selectedCount">0</span>品)
+                    </small>
+                </h2>
+                <div id="productListArea">
+                    <div style="color: #777; padding: 10px">
+                        ファイルを読み込むとここにリストが表示されます。
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: 計算 -->
+            <div class="card">
+                <h2>3. 検索実行</h2>
+                <div class="ctrl-row">
+                    <label
+                        >目標金額:
+                        <input
+                            type="number"
+                            id="targetPrice"
+                            value="1000"
+                            min="1"
+                    /></label>
+                    <button
+                        class="btn-calc"
+                        id="btnCalc"
+                        onclick="startSearch()"
+                        disabled
+                    >
+                        計算する
+                    </button>
+                </div>
+                <div style="margin-top: 10px" id="statusBar"></div>
+                <div class="result-list" id="resultList"></div>
+            </div>
+        </div>
+
+        <script>
+            /**
+             * データ構造:
+             * categories = {
+             *   "お菓子.csv": [ { name:"チョコ", price:100, active:true }, ... ],
+             *   "飲み物.csv": [ ... ]
+             * }
+             */
+            let CATEGORIES = {};
+            const MAX_RESULTS = 5000;
+
+            // =============================================
+            // 1. ファイル読み込み処理
+            // =============================================
+            async function handleFiles(files) {
+                if (!files.length) return;
+
+                CATEGORIES = {}; // リセット
+                const msgEl = document.getElementById("fileMsg");
+                msgEl.textContent = `⏳ ${files.length}個のファイルを読み込み中...`;
+
+                let totalItems = 0;
+
+                for (const file of files) {
+                    try {
+                        const text = await readFileAsText(file);
+                        const items = parseCSV(text);
+                        if (items.length > 0) {
+                            CATEGORIES[file.name] = items;
+                            totalItems += items.length;
+                        }
+                    } catch (e) {
+                        console.error(`Error reading ${file.name}:`, e);
+                    }
+                }
+
+                msgEl.textContent = `✅ 読み込み完了: ${Object.keys(CATEGORIES).length}ファイル, 合計${totalItems}商品`;
+                renderProductList();
+                updateSelectionState();
+            }
+
+            function readFileAsText(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (e) => reject(e);
+                    // 日本語CSV対策でShift_JISかUTF-8か判定したいが、今回はUTF-8前提とする
+                    reader.readAsText(file);
+                });
+            }
+
+            function parseCSV(text) {
+                const lines = text.split(/\r\n|\n/);
+                const items = [];
+
+                lines.forEach((line) => {
+                    // 空行やコメント行のスキップ
+                    if (!line.trim()) return;
+
+                    // カンマ区切り (商品名, 金額)
+                    const cols = line.split(",");
+                    if (cols.length < 2) return;
+
+                    const name = cols[0].trim();
+                    const priceRaw = cols[1].trim();
+                    const price = parseInt(priceRaw, 10);
+
+                    // 金額が数値として有効なら登録
+                    if (name && !isNaN(price) && price > 0) {
+                        items.push({
+                            name: name,
+                            price: price,
+                            active: true, // デフォルトで計算対象にする
+                        });
+                    }
+                });
+                return items;
+            }
+
+            // =============================================
+            // 2. リスト描画 & チェックボックス制御
+            // =============================================
+            function renderProductList() {
+                const container = document.getElementById("productListArea");
+                container.innerHTML = "";
+
+                const filenames = Object.keys(CATEGORIES).sort();
+                if (filenames.length === 0) {
+                    container.innerHTML =
+                        '<div style="color:red;">有効なデータが見つかりませんでした。</div>';
+                    return;
+                }
+
+                filenames.forEach((fname) => {
+                    const items = CATEGORIES[fname];
+
+                    // カテゴリコンテナ
+                    const groupDiv = document.createElement("div");
+                    groupDiv.className = "category-group";
+
+                    // カテゴリヘッダー（全選択チェックボックス）
+                    const header = document.createElement("div");
+                    header.className = "cat-header";
+                    header.innerHTML = `
+      <label style="display:flex; align-items:center; cursor:pointer; width:100%;">
+        <input type="checkbox" checked onchange="toggleCategory('${fname}', this.checked)">
+        📂 ${fname} (${items.length}品)
+      </label>
+    `;
+                    groupDiv.appendChild(header);
+
+                    // アイテムリスト
+                    const listDiv = document.createElement("div");
+                    listDiv.className = "cat-items";
+                    listDiv.id = `list-${fname}`;
+
+                    items.forEach((item, idx) => {
+                        const row = document.createElement("div");
+                        row.className = "item-row";
+                        row.innerHTML = `
+        <label style="display:flex; align-items:center; width:100%; cursor:pointer;">
+          <input type="checkbox" checked
+            onchange="toggleItem('${fname}', ${idx}, this.checked)">
+          <span>${item.name}</span>
+          <span class="price-tag">¥${item.price}</span>
+        </label>
+      `;
+                        listDiv.appendChild(row);
+                    });
+
+                    groupDiv.appendChild(listDiv);
+                    container.appendChild(groupDiv);
+                });
+
+                document.getElementById("btnCalc").disabled = false;
+            }
+
+            // カテゴリ一括切替
+            window.toggleCategory = function (filename, isChecked) {
+                // データを更新
+                CATEGORIES[filename].forEach(
+                    (item) => (item.active = isChecked),
+                );
+
+                // 表示（子要素のチェックボックス）を更新
+                const listDiv = document.getElementById(`list-${filename}`);
+                const inputs = listDiv.querySelectorAll("input[type=checkbox]");
+                inputs.forEach((input) => (input.checked = isChecked));
+
+                // 見た目の非活性スタイル
+                updateRowStyles(listDiv, isChecked);
+                updateSelectionState();
+            };
+
+            // 個別アイテム切替
+            window.toggleItem = function (filename, index, isChecked) {
+                CATEGORIES[filename][index].active = isChecked;
+                updateSelectionState();
+
+                // 親カテゴリのチェック状態連動（簡易実装: 全てOFFなら親もOFFにする等は省略）
+            };
+
+            function updateRowStyles(container, active) {
+                const rows = container.querySelectorAll(".item-row");
+                rows.forEach((r) => {
+                    if (active) r.classList.remove("inactive");
+                    else r.classList.add("inactive");
+                });
+            }
+
+            function updateSelectionState() {
+                let count = 0;
+                Object.values(CATEGORIES).forEach((items) => {
+                    items.forEach((item) => {
+                        if (item.active) count++;
+                    });
+                });
+                document.getElementById("selectedCount").textContent = count;
+                document.getElementById("btnCalc").disabled = count === 0;
+            }
+
+            // =============================================
+            // 3. 計算ロジック
+            // =============================================
+            function getActiveItems() {
+                // 全カテゴリからactive=trueなものだけ抽出してフラットな配列にする
+                let flat = [];
+                Object.values(CATEGORIES).forEach((items) => {
+                    items.forEach((item) => {
+                        if (item.active) flat.push(item);
+                    });
+                });
+                return flat;
+            }
+
+            function startSearch() {
+                const targetInput = document.getElementById("targetPrice");
+                const target = parseInt(targetInput.value, 10);
+                const statusEl = document.getElementById("statusBar");
+                const resultList = document.getElementById("resultList");
+
+                if (isNaN(target) || target <= 0) {
+                    alert("目標金額を正しく入力してください");
+                    return;
+                }
+
+                const items = getActiveItems();
+                if (items.length === 0) {
+                    alert("計算対象の商品が選択されていません");
+                    return;
+                }
+
+                // UIリセット
+                resultList.innerHTML = "";
+                statusEl.innerHTML = '<span class="spinner"></span> 計算中...';
+                document.getElementById("btnCalc").disabled = true;
+
+                // UIブロック回避のためsetTimeout
+                setTimeout(() => {
+                    const startTime = performance.now();
+
+                    // 計算実行
+                    const { results, limitReached } = findCombinations(
+                        items,
+                        target,
+                    );
+
+                    const elapsed = (performance.now() - startTime).toFixed(1);
+
+                    // ステータス表示
+                    let msg = "";
+                    if (results.length === 0) {
+                        msg = `該当パターンなし (${elapsed}ms)`;
+                        statusEl.style.color = "#d35400";
+                    } else {
+                        msg = `<strong>${results.length}件</strong> 見つかりました (${elapsed}ms)`;
+                        if (limitReached)
+                            msg += " <small>※上限に達したため中断</small>";
+                        statusEl.style.color = "#27ae60";
+                    }
+                    statusEl.innerHTML = msg;
+
+                    // 結果表示
+                    const fragment = document.createDocumentFragment();
+                    results.forEach((combo, i) => {
+                        const div = document.createElement("div");
+                        div.className = "result-item";
+                        div.innerHTML = `<span class="idx">#${i + 1}</span> ${formatCombo(combo)}`;
+                        fragment.appendChild(div);
+                    });
+                    resultList.appendChild(fragment);
+
+                    document.getElementById("btnCalc").disabled = false;
+                }, 50);
+            }
+
+            // 探索アルゴリズム (ID不要、オブジェクト参照で処理)
+            function findCombinations(items, target) {
+                // 金額昇順ソート（枝刈り効率化）
+                items.sort((a, b) => a.price - b.price);
+
+                const results = [];
+                let limitReached = false;
+
+                function dfs(startIdx, currentSum, currentItems) {
+                    if (limitReached) return;
+
+                    if (currentSum === target) {
+                        results.push([...currentItems]);
+                        if (results.length >= MAX_RESULTS) limitReached = true;
+                        return;
+                    }
+
+                    if (currentSum > target) return;
+
+                    for (let i = startIdx; i < items.length; i++) {
+                        const item = items[i];
+                        // 枝刈り：今のアイテムを足してオーバーするなら、それ以降のアイテムも確実にオーバー
+                        if (currentSum + item.price > target) break;
+
+                        currentItems.push(item);
+                        // 重複許可なので index 'i' をそのまま渡す
+                        dfs(i, currentSum + item.price, currentItems);
+                        if (limitReached) return;
+                        currentItems.pop();
+                    }
+                }
+
+                dfs(0, 0, []);
+                return { results, limitReached };
+            }
+
+            function formatCombo(combo) {
+                // 名前で集計: Map { "商品名" => 個数 }
+                const counts = new Map();
+                combo.forEach((p) => {
+                    counts.set(p.name, (counts.get(p.name) || 0) + 1);
+                });
+
+                // 文字列化
+                const parts = [];
+                counts.forEach((count, name) => {
+                    parts.push(`${name}×${count}`);
+                });
+                return parts.join(", ");
+            }
+        </script>
+    </body>
 </html>
