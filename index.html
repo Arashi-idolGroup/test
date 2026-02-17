@@ -124,7 +124,6 @@
                 font-size: 0.85rem;
             }
 
-            /* server auto-load banner */
             .server-banner {
                 padding: 10px 16px;
                 border-radius: 8px;
@@ -359,6 +358,40 @@
                 }
             }
 
+            /* ===== sort controls ===== */
+            .sort-controls {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin: 12px 0 6px;
+                flex-wrap: wrap;
+            }
+            .sort-controls label {
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: #555;
+            }
+            .sort-btn {
+                padding: 6px 16px;
+                font-size: 0.82rem;
+                font-weight: 600;
+                border: 2px solid #ccc;
+                border-radius: 6px;
+                background: #fff;
+                cursor: pointer;
+                transition: all 0.15s;
+                color: #555;
+            }
+            .sort-btn:hover {
+                border-color: #4a6cf7;
+                color: #4a6cf7;
+            }
+            .sort-btn.active {
+                border-color: #4a6cf7;
+                background: #4a6cf7;
+                color: #fff;
+            }
+
             .result-list {
                 max-height: 500px;
                 overflow-y: auto;
@@ -369,6 +402,9 @@
                 border-bottom: 1px solid #eee;
                 font-size: 0.9rem;
                 line-height: 1.5;
+                display: flex;
+                align-items: baseline;
+                gap: 8px;
             }
             .result-item:last-child {
                 border-bottom: none;
@@ -380,8 +416,18 @@
                 border-radius: 4px;
                 padding: 1px 8px;
                 font-size: 0.78rem;
-                margin-right: 8px;
                 font-weight: 600;
+                flex-shrink: 0;
+            }
+            .result-item .combo-detail {
+                flex: 1;
+            }
+            .result-item .item-count {
+                font-size: 0.78rem;
+                color: #888;
+                white-space: nowrap;
+                flex-shrink: 0;
+                margin-left: auto;
             }
 
             ::-webkit-scrollbar {
@@ -405,14 +451,11 @@
             <!-- CSV読み込み -->
             <div class="card">
                 <h2>📂 CSVファイル読み込み</h2>
-
-                <!-- サーバー自動読み込みステータス -->
                 <div
                     id="serverBanner"
                     class="server-banner loading"
                     style="display: none"
                 ></div>
-
                 <div
                     class="drop-zone"
                     id="dropZone"
@@ -524,6 +567,30 @@
                 <div id="statusBar" class="status-bar idle">
                     商品を読み込んで「計算する」を押してください
                 </div>
+
+                <!-- ソート切替 -->
+                <div
+                    class="sort-controls"
+                    id="sortControls"
+                    style="display: none"
+                >
+                    <label>並び順（商品数）:</label>
+                    <button
+                        class="sort-btn active"
+                        id="sortAsc"
+                        onclick="setSortOrder('asc')"
+                    >
+                        ▲ 少ない順
+                    </button>
+                    <button
+                        class="sort-btn"
+                        id="sortDesc"
+                        onclick="setSortOrder('desc')"
+                    >
+                        ▼ 多い順
+                    </button>
+                </div>
+
                 <div class="result-list" id="resultList"></div>
             </div>
         </div>
@@ -532,14 +599,16 @@
             /* ==============================================
    設定
    ============================================== */
-            const CSV_DIR = "./csv/"; // CSVフォルダのパス
-            const CSV_INDEX = CSV_DIR + "index.json"; // ファイル一覧JSON
+            const CSV_DIR = "./csv/";
+            const CSV_INDEX = CSV_DIR + "index.json";
             const MAX_RESULTS = 5000;
 
             /* ==============================================
    グローバル状態
    ============================================== */
             let categories = [];
+            let currentResults = []; // 計算結果を保持（再ソート用）
+            let currentSort = "asc"; // デフォルト昇順
 
             /* ==============================================
    DOM
@@ -554,32 +623,30 @@
             const cbActionsEl = document.getElementById("cbActions");
             const summaryEl = document.getElementById("productSummary");
             const serverBanner = document.getElementById("serverBanner");
+            const sortControlsEl = document.getElementById("sortControls");
 
             /* ==============================================
-   ページ読み込み時にサーバーCSVを自動取得
+   ページ読み込み時
    ============================================== */
             window.addEventListener("DOMContentLoaded", () => {
                 renderCategories();
                 loadFromServer();
             });
 
+            /* ==============================================
+   サーバーCSV自動読み込み
+   ============================================== */
             async function loadFromServer() {
                 serverBanner.style.display = "flex";
                 serverBanner.className = "server-banner loading";
                 serverBanner.innerHTML =
                     '<div class="mini-spinner"></div> サーバーからCSVファイルを読み込み中…';
-
                 try {
-                    // 1) index.json を取得
                     const res = await fetch(CSV_INDEX);
                     if (!res.ok) throw new Error(`index.json: ${res.status}`);
                     const fileList = await res.json();
-
-                    if (!Array.isArray(fileList) || !fileList.length) {
+                    if (!Array.isArray(fileList) || !fileList.length)
                         throw new Error("ファイル一覧が空です");
-                    }
-
-                    // 2) 各CSVを取得
                     let ok = 0,
                         ng = 0;
                     for (const fileName of fileList) {
@@ -598,7 +665,6 @@
                                 ng++;
                                 continue;
                             }
-
                             const idx = categories.findIndex(
                                 (c) => c.name === catName,
                             );
@@ -619,7 +685,6 @@
                             ng++;
                         }
                     }
-
                     serverBanner.className = "server-banner success";
                     serverBanner.innerHTML =
                         `✅ サーバーから ${ok} ファイル読み込み完了` +
@@ -630,7 +695,6 @@
                     serverBanner.innerHTML = `⚠ サーバー読み込み不可（${e.message}）— 手動でCSVを追加するかサンプルデータをお使いください`;
                 }
             }
-
             async function reloadFromServer() {
                 categories = [];
                 renderCategories();
@@ -656,7 +720,6 @@
                 fileInput.value = "";
             });
 
-            /* ドラッグ＆ドロップ */
             dropZone.addEventListener("dragover", (e) => {
                 e.preventDefault();
                 dropZone.classList.add("drag-over");
@@ -768,7 +831,6 @@
                 }
                 return out;
             }
-
             function splitCSV(line) {
                 const r = [];
                 let cur = "",
@@ -991,7 +1053,6 @@
                 }
                 noDataEl.style.display = "none";
                 cbActionsEl.style.display = "flex";
-
                 let total = 0,
                     checked = 0;
                 categories.forEach((c) => {
@@ -1003,14 +1064,13 @@
                 categories.forEach((cat, ci) => {
                     const panel = document.createElement("div");
                     panel.className = "category-panel";
-
                     const hdr = document.createElement("div");
                     hdr.className = "category-header";
                     const cb = document.createElement("input");
                     cb.type = "checkbox";
                     cb.className = "cat-cb";
-                    const allC = cat.products.every((p) => p.checked);
-                    const noneC = cat.products.every((p) => !p.checked);
+                    const allC = cat.products.every((p) => p.checked),
+                        noneC = cat.products.every((p) => !p.checked);
                     cb.checked = allC;
                     cb.indeterminate = !allC && !noneC;
                     cb.addEventListener("click", (e) => e.stopPropagation());
@@ -1018,7 +1078,6 @@
                         e.stopPropagation();
                         toggleCategory(ci);
                     });
-
                     const nm = document.createElement("span");
                     nm.className = "cat-name";
                     nm.textContent = cat.name;
@@ -1029,7 +1088,6 @@
                     tgl.className =
                         "cat-toggle" + (cat.expanded ? " open" : "");
                     tgl.textContent = "▼";
-
                     hdr.append(cb, nm, cnt, tgl);
                     hdr.addEventListener("click", () => {
                         cat.expanded = !cat.expanded;
@@ -1057,7 +1115,6 @@
                         row.append(pcb, pn, pp);
                         body.appendChild(row);
                     });
-
                     panel.append(hdr, body);
                     categoryListEl.appendChild(panel);
                 });
@@ -1077,9 +1134,6 @@
                 renderCategories();
             }
 
-            /* ==============================================
-   選択中の商品取得
-   ============================================== */
             function getCheckedProducts() {
                 const out = [];
                 categories.forEach((c) =>
@@ -1109,8 +1163,7 @@
                 }
                 const products = getCheckedProducts();
                 if (!products.length) {
-                    errEl.textContent =
-                        "⚠ 商品が選択されていません。CSVを読み込んでください。";
+                    errEl.textContent = "⚠ 商品が選択されていません。";
                     return null;
                 }
                 return { target: v, products };
@@ -1123,7 +1176,7 @@
             }
 
             /* ==============================================
-   組み合わせ探索 (DFS + 枝刈り)
+   組み合わせ探索 (DFS)
    ============================================== */
             function findCombinations(items, target) {
                 const sorted = items.slice().sort((a, b) => a.price - b.price);
@@ -1148,10 +1201,56 @@
                 return { results, limitHit };
             }
 
+            /* ==============================================
+   結果整形ヘルパー
+   ============================================== */
+            function comboItemCount(combo) {
+                return combo.length;
+            }
+
             function formatCombo(combo) {
                 const m = new Map();
                 combo.forEach((p) => m.set(p.name, (m.get(p.name) || 0) + 1));
                 return [...m].map(([n, c]) => `${n}×${c}`).join(", ");
+            }
+
+            /* ==============================================
+   ソート & 結果描画
+   ============================================== */
+            function setSortOrder(order) {
+                currentSort = order;
+                document
+                    .getElementById("sortAsc")
+                    .classList.toggle("active", order === "asc");
+                document
+                    .getElementById("sortDesc")
+                    .classList.toggle("active", order === "desc");
+                renderResults();
+            }
+
+            function renderResults() {
+                const listEl = document.getElementById("resultList");
+                listEl.innerHTML = "";
+                if (!currentResults.length) return;
+
+                // ソート（元配列を壊さないようコピー）
+                const sorted = currentResults.slice().sort((a, b) => {
+                    const diff = comboItemCount(a) - comboItemCount(b);
+                    return currentSort === "asc" ? diff : -diff;
+                });
+
+                const frag = document.createDocumentFragment();
+                sorted.forEach((combo, i) => {
+                    const count = comboItemCount(combo);
+                    const d = document.createElement("div");
+                    d.className = "result-item";
+                    d.innerHTML =
+                        `<span class="idx">#${i + 1}</span>` +
+                        `<span class="combo-detail">${formatCombo(combo)}</span>` +
+                        `<span class="item-count">計${count}個</span>`;
+                    frag.appendChild(d);
+                });
+                listEl.appendChild(frag);
             }
 
             /* ==============================================
@@ -1161,8 +1260,9 @@
                 const v = validate();
                 if (!v) return;
                 const btn = document.getElementById("btnCalc");
-                const listEl = document.getElementById("resultList");
-                listEl.innerHTML = "";
+                currentResults = [];
+                sortControlsEl.style.display = "none";
+                document.getElementById("resultList").innerHTML = "";
                 btn.disabled = true;
                 setStatus("running", '<div class="spinner"></div> 計算中…');
 
@@ -1174,30 +1274,38 @@
                     );
                     const ms = (performance.now() - t0).toFixed(1);
 
-                    if (!results.length)
+                    currentResults = results;
+
+                    if (!results.length) {
                         setStatus(
                             "idle",
                             `該当する組み合わせはありませんでした（${ms}ms）`,
                         );
-                    else if (limitHit)
+                    } else if (limitHit) {
                         setStatus(
                             "warn",
                             `⚠ ${MAX_RESULTS.toLocaleString()}件で探索を中断しました（${ms}ms）`,
                         );
-                    else
+                    } else {
                         setStatus(
                             "done",
                             `✅ <strong>${results.length.toLocaleString()}件</strong>の組み合わせが見つかりました（${ms}ms）`,
                         );
+                    }
 
-                    const frag = document.createDocumentFragment();
-                    results.forEach((combo, i) => {
-                        const d = document.createElement("div");
-                        d.className = "result-item";
-                        d.innerHTML = `<span class="idx">#${i + 1}</span>${formatCombo(combo)}`;
-                        frag.appendChild(d);
-                    });
-                    listEl.appendChild(frag);
+                    if (results.length) {
+                        sortControlsEl.style.display = "flex";
+                        // デフォルト昇順にリセット
+                        currentSort = "asc";
+                        document
+                            .getElementById("sortAsc")
+                            .classList.add("active");
+                        document
+                            .getElementById("sortDesc")
+                            .classList.remove("active");
+                        renderResults();
+                    }
+
                     btn.disabled = false;
                 }, 50);
             }
