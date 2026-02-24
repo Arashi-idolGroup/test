@@ -1,623 +1,1320 @@
-
-
-CSVの3列目に対応しました。変更箇所だけだと分かりにくいので全体を掲載します。
-
-```html
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>商品組み合わせ検索システム</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI','Hiragino Sans','Noto Sans JP',sans-serif;background:#f0f2f5;color:#333;min-height:100vh}
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>商品組み合わせ検索システム</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family:
+                    "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+                background: #f0f2f5;
+                color: #333;
+                min-height: 100vh;
+            }
 
-.header{background:linear-gradient(135deg,#4a6cf7,#6a3de8);color:#fff;padding:28px 20px;text-align:center}
-.header h1{font-size:1.6rem;letter-spacing:.05em}
-.header p{margin-top:6px;font-size:.85rem;opacity:.85}
+            .header {
+                background: linear-gradient(135deg, #4a6cf7, #6a3de8);
+                color: #fff;
+                padding: 28px 20px;
+                text-align: center;
+            }
+            .header h1 {
+                font-size: 1.6rem;
+                letter-spacing: 0.05em;
+            }
+            .header p {
+                margin-top: 6px;
+                font-size: 0.85rem;
+                opacity: 0.85;
+            }
 
-.container{max-width:960px;margin:0 auto;padding:20px}
+            .container {
+                max-width: 960px;
+                margin: 0 auto;
+                padding: 20px;
+            }
 
-.card{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:24px;margin-bottom:20px}
-.card h2{font-size:1.1rem;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #4a6cf7;color:#4a6cf7}
+            .card {
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+                padding: 24px;
+                margin-bottom: 20px;
+            }
+            .card h2 {
+                font-size: 1.1rem;
+                margin-bottom: 14px;
+                padding-bottom: 8px;
+                border-bottom: 2px solid #4a6cf7;
+                color: #4a6cf7;
+            }
 
-.drop-zone{border:2px dashed #aab;border-radius:10px;padding:30px;text-align:center;color:#888;transition:all .2s;cursor:pointer;margin-bottom:12px}
-.drop-zone:hover,.drop-zone.drag-over{border-color:#4a6cf7;background:#f5f6ff;color:#4a6cf7}
-.drop-zone .icon{font-size:2rem;margin-bottom:8px}
-.drop-zone p{font-size:.9rem}
+            .drop-zone {
+                border: 2px dashed #aab;
+                border-radius: 10px;
+                padding: 30px;
+                text-align: center;
+                color: #888;
+                transition: all 0.2s;
+                cursor: pointer;
+                margin-bottom: 12px;
+            }
+            .drop-zone:hover,
+            .drop-zone.drag-over {
+                border-color: #4a6cf7;
+                background: #f5f6ff;
+                color: #4a6cf7;
+            }
+            .drop-zone .icon {
+                font-size: 2rem;
+                margin-bottom: 8px;
+            }
+            .drop-zone p {
+                font-size: 0.9rem;
+            }
 
-.file-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-.file-controls .btn{padding:8px 18px;font-size:.85rem;font-weight:600;border:2px solid #4a6cf7;border-radius:8px;cursor:pointer;background:#fff;color:#4a6cf7;transition:all .2s}
-.file-controls .btn:hover{background:#4a6cf7;color:#fff}
-.file-controls .btn.sample{border-color:#28a745;color:#28a745}
-.file-controls .btn.sample:hover{background:#28a745;color:#fff}
-.file-controls .btn.danger{border-color:#dc3545;color:#dc3545}
-.file-controls .btn.danger:hover{background:#dc3545;color:#fff}
-.file-controls select{padding:8px 12px;border:2px solid #ccc;border-radius:8px;font-size:.85rem}
+            .file-controls {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: wrap;
+                margin-bottom: 12px;
+            }
+            .file-controls .btn {
+                padding: 8px 18px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                border: 2px solid #4a6cf7;
+                border-radius: 8px;
+                cursor: pointer;
+                background: #fff;
+                color: #4a6cf7;
+                transition: all 0.2s;
+            }
+            .file-controls .btn:hover {
+                background: #4a6cf7;
+                color: #fff;
+            }
+            .file-controls .btn.sample {
+                border-color: #28a745;
+                color: #28a745;
+            }
+            .file-controls .btn.sample:hover {
+                background: #28a745;
+                color: #fff;
+            }
+            .file-controls .btn.danger {
+                border-color: #dc3545;
+                color: #dc3545;
+            }
+            .file-controls .btn.danger:hover {
+                background: #dc3545;
+                color: #fff;
+            }
+            .file-controls select {
+                padding: 8px 12px;
+                border: 2px solid #ccc;
+                border-radius: 8px;
+                font-size: 0.85rem;
+            }
 
-.server-banner{padding:10px 16px;border-radius:8px;font-size:.85rem;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.server-banner.loading{background:#fff3cd;color:#856404}
-.server-banner.success{background:#d4edda;color:#155724}
-.server-banner.fail{background:#f8d7da;color:#721c24}
-.server-banner .mini-spinner{width:14px;height:14px;border:2px solid #856404;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
+            .server-banner {
+                padding: 10px 16px;
+                border-radius: 8px;
+                font-size: 0.85rem;
+                margin-bottom: 12px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .server-banner.loading {
+                background: #fff3cd;
+                color: #856404;
+            }
+            .server-banner.success {
+                background: #d4edda;
+                color: #155724;
+            }
+            .server-banner.fail {
+                background: #f8d7da;
+                color: #721c24;
+            }
+            .server-banner .mini-spinner {
+                width: 14px;
+                height: 14px;
+                border: 2px solid #856404;
+                border-top-color: transparent;
+                border-radius: 50%;
+                animation: spin 0.6s linear infinite;
+            }
 
-.category-list{max-height:520px;overflow-y:auto}
-.category-panel{border:1px solid #dde0f5;border-radius:8px;margin-bottom:8px;overflow:hidden}
-.category-header{display:flex;align-items:center;padding:10px 14px;background:#f8f9ff;cursor:pointer;gap:8px;user-select:none}
-.category-header:hover{background:#edefff}
-.category-header .cat-cb{flex-shrink:0;width:18px;height:18px;cursor:pointer}
-.category-header .cat-name{font-weight:700;flex:1}
-.category-header .cat-count{font-size:.8rem;color:#888;margin-right:8px}
-.category-header .cat-toggle{font-size:.75rem;color:#999;transition:transform .2s}
-.category-header .cat-toggle.open{transform:rotate(180deg)}
+            .category-list {
+                max-height: 520px;
+                overflow-y: auto;
+            }
+            .category-panel {
+                border: 1px solid #dde0f5;
+                border-radius: 8px;
+                margin-bottom: 8px;
+                overflow: hidden;
+            }
+            .category-header {
+                display: flex;
+                align-items: center;
+                padding: 10px 14px;
+                background: #f8f9ff;
+                cursor: pointer;
+                gap: 8px;
+                user-select: none;
+            }
+            .category-header:hover {
+                background: #edefff;
+            }
+            .category-header .cat-cb {
+                flex-shrink: 0;
+                width: 18px;
+                height: 18px;
+                cursor: pointer;
+            }
+            .category-header .cat-name {
+                font-weight: 700;
+                flex: 1;
+            }
+            .category-header .cat-count {
+                font-size: 0.8rem;
+                color: #888;
+                margin-right: 8px;
+            }
+            .category-header .cat-toggle {
+                font-size: 0.75rem;
+                color: #999;
+                transition: transform 0.2s;
+            }
+            .category-header .cat-toggle.open {
+                transform: rotate(180deg);
+            }
 
-.category-body{display:none;padding:4px 14px 10px 40px}
-.category-body.expanded{display:block}
+            .category-body {
+                display: none;
+                padding: 4px 14px 10px 40px;
+            }
+            .category-body.expanded {
+                display: block;
+            }
 
-.product-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:.88rem}
-.product-row:last-child{border-bottom:none}
-.product-row input[type=checkbox]{width:16px;height:16px;cursor:pointer;flex-shrink:0}
-.product-row .prod-name{flex:1}
-.product-row .prod-price{color:#4a6cf7;font-weight:600;white-space:nowrap}
+            .product-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 5px 0;
+                border-bottom: 1px solid #f0f0f0;
+                font-size: 0.88rem;
+            }
+            .product-row:last-child {
+                border-bottom: none;
+            }
+            .product-row input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+            .product-row .prod-name {
+                flex: 1;
+            }
+            .product-row .prod-price {
+                color: #4a6cf7;
+                font-weight: 600;
+                white-space: nowrap;
+            }
 
-.no-data{text-align:center;color:#999;padding:30px;font-size:.95rem}
+            .no-data {
+                text-align: center;
+                color: #999;
+                padding: 30px;
+                font-size: 0.95rem;
+            }
 
-.cb-actions{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.cb-actions .btn-sm{padding:5px 14px;font-size:.8rem;border-radius:6px;border:1px solid #aab;background:#fff;cursor:pointer;transition:all .2s}
-.cb-actions .btn-sm:hover{background:#eee}
+            .cb-actions {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 10px;
+                flex-wrap: wrap;
+            }
+            .cb-actions .btn-sm {
+                padding: 5px 14px;
+                font-size: 0.8rem;
+                border-radius: 6px;
+                border: 1px solid #aab;
+                background: #fff;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .cb-actions .btn-sm:hover {
+                background: #eee;
+            }
 
-.product-summary{font-size:.85rem;color:#666;margin-bottom:10px}
+            .product-summary {
+                font-size: 0.85rem;
+                color: #666;
+                margin-bottom: 10px;
+            }
 
-.input-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.input-row label{font-weight:600;white-space:nowrap}
-.input-row input[type=number]{width:180px;padding:10px 14px;font-size:1rem;border:2px solid #ccc;border-radius:8px;outline:none;transition:border .2s}
-.input-row input[type=number]:focus{border-color:#4a6cf7}
+            .input-row {
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+            .input-row label {
+                font-weight: 600;
+                white-space: nowrap;
+            }
+            .input-row input[type="number"] {
+                width: 180px;
+                padding: 10px 14px;
+                font-size: 1rem;
+                border: 2px solid #ccc;
+                border-radius: 8px;
+                outline: none;
+                transition: border 0.2s;
+            }
+            .input-row input[type="number"]:focus {
+                border-color: #4a6cf7;
+            }
 
-.btn-calc{padding:10px 28px;font-size:1rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#4a6cf7,#6a3de8);border:none;border-radius:8px;cursor:pointer;transition:opacity .2s}
-.btn-calc:hover{opacity:.85}
-.btn-calc:disabled{opacity:.5;cursor:not-allowed}
+            .btn-calc {
+                padding: 10px 28px;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #fff;
+                background: linear-gradient(135deg, #4a6cf7, #6a3de8);
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: opacity 0.2s;
+            }
+            .btn-calc:hover {
+                opacity: 0.85;
+            }
+            .btn-calc:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
 
-.err-msg{color:#d32f2f;font-size:.85rem;margin-top:8px}
+            .err-msg {
+                color: #d32f2f;
+                font-size: 0.85rem;
+                margin-top: 8px;
+            }
 
-.status-bar{padding:14px 18px;border-radius:8px;font-size:.95rem;font-weight:600;display:flex;align-items:center;gap:10px}
-.status-bar.idle{background:#e9ecef;color:#666}
-.status-bar.running{background:#fff3cd;color:#856404}
-.status-bar.done{background:#d4edda;color:#155724}
-.status-bar.error{background:#f8d7da;color:#721c24}
-.status-bar.warn{background:#fff3cd;color:#856404}
+            .status-bar {
+                padding: 14px 18px;
+                border-radius: 8px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .status-bar.idle {
+                background: #e9ecef;
+                color: #666;
+            }
+            .status-bar.running {
+                background: #fff3cd;
+                color: #856404;
+            }
+            .status-bar.done {
+                background: #d4edda;
+                color: #155724;
+            }
+            .status-bar.error {
+                background: #f8d7da;
+                color: #721c24;
+            }
+            .status-bar.warn {
+                background: #fff3cd;
+                color: #856404;
+            }
 
-.spinner{width:18px;height:18px;border:3px solid #856404;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+            .spinner {
+                width: 18px;
+                height: 18px;
+                border: 3px solid #856404;
+                border-top-color: transparent;
+                border-radius: 50%;
+                animation: spin 0.6s linear infinite;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
 
-.sort-controls{display:flex;align-items:center;gap:10px;margin:12px 0 6px;flex-wrap:wrap}
-.sort-controls label{font-size:.85rem;font-weight:600;color:#555}
-.sort-btn{padding:6px 16px;font-size:.82rem;font-weight:600;border:2px solid #ccc;border-radius:6px;background:#fff;cursor:pointer;transition:all .15s;color:#555}
-.sort-btn:hover{border-color:#4a6cf7;color:#4a6cf7}
-.sort-btn.active{border-color:#4a6cf7;background:#4a6cf7;color:#fff}
+            .sort-controls {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin: 12px 0 6px;
+                flex-wrap: wrap;
+            }
+            .sort-controls label {
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: #555;
+            }
+            .sort-btn {
+                padding: 6px 16px;
+                font-size: 0.82rem;
+                font-weight: 600;
+                border: 2px solid #ccc;
+                border-radius: 6px;
+                background: #fff;
+                cursor: pointer;
+                transition: all 0.15s;
+                color: #555;
+            }
+            .sort-btn:hover {
+                border-color: #4a6cf7;
+                color: #4a6cf7;
+            }
+            .sort-btn.active {
+                border-color: #4a6cf7;
+                background: #4a6cf7;
+                color: #fff;
+            }
 
-.result-list{max-height:500px;overflow-y:auto;padding:4px 0}
-.result-item{padding:10px 16px;border-bottom:1px solid #eee;font-size:.9rem;line-height:1.5;display:flex;align-items:baseline;gap:8px}
-.result-item:last-child{border-bottom:none}
-.result-item .idx{display:inline-block;background:#4a6cf7;color:#fff;border-radius:4px;padding:1px 8px;font-size:.78rem;font-weight:600;flex-shrink:0}
-.result-item .combo-detail{flex:1}
-.result-item .item-count{font-size:.78rem;color:#888;white-space:nowrap;flex-shrink:0;margin-left:auto}
+            .result-list {
+                max-height: 500px;
+                overflow-y: auto;
+                padding: 4px 0;
+            }
+            .result-item {
+                padding: 10px 16px;
+                border-bottom: 1px solid #eee;
+                font-size: 0.9rem;
+                line-height: 1.5;
+                display: flex;
+                align-items: baseline;
+                gap: 8px;
+            }
+            .result-item:last-child {
+                border-bottom: none;
+            }
+            .result-item .idx {
+                display: inline-block;
+                background: #4a6cf7;
+                color: #fff;
+                border-radius: 4px;
+                padding: 1px 8px;
+                font-size: 0.78rem;
+                font-weight: 600;
+                flex-shrink: 0;
+            }
+            .result-item .combo-detail {
+                flex: 1;
+            }
+            .result-item .item-count {
+                font-size: 0.78rem;
+                color: #888;
+                white-space: nowrap;
+                flex-shrink: 0;
+                margin-left: auto;
+            }
 
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px}
-</style>
-</head>
-<body>
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #bbb;
+                border-radius: 3px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🛒 商品組み合わせ検索システム</h1>
+            <p>
+                CSVファイルから商品を読み込み、目標金額ぴったりの組み合わせを全探索します
+            </p>
+        </div>
 
-<div class="header">
-  <h1>🛒 商品組み合わせ検索システム</h1>
-  <p>CSVファイルから商品を読み込み、目標金額ぴったりの組み合わせを全探索します</p>
-</div>
+        <div class="container">
+            <div class="card">
+                <h2>📂 CSVファイル読み込み</h2>
+                <div
+                    id="serverBanner"
+                    class="server-banner loading"
+                    style="display: none"
+                ></div>
+                <div
+                    class="drop-zone"
+                    id="dropZone"
+                    onclick="document.getElementById('dirInput').click()"
+                >
+                    <div class="icon">📁</div>
+                    <p>CSVファイルまたはフォルダをここにドラッグ＆ドロップ</p>
+                    <p style="font-size: 0.8rem; margin-top: 4px">
+                        またはクリック／下のボタンから選択
+                    </p>
+                </div>
+                <div class="file-controls">
+                    <button
+                        class="btn"
+                        onclick="document.getElementById('dirInput').click()"
+                    >
+                        📁 フォルダ選択
+                    </button>
+                    <button
+                        class="btn"
+                        onclick="document.getElementById('fileInput').click()"
+                    >
+                        📄 ファイル選択
+                    </button>
+                    <button class="btn" onclick="reloadFromServer()">
+                        🔄 サーバー再読込
+                    </button>
+                    <button class="btn sample" onclick="loadSampleData()">
+                        💡 サンプルデータ
+                    </button>
+                    <button class="btn danger" onclick="clearAllData()">
+                        🗑 クリア
+                    </button>
+                    <label style="font-size: 0.85rem; color: #666"
+                        >文字コード:</label
+                    >
+                    <select id="encoding">
+                        <option value="UTF-8">UTF-8</option>
+                        <option value="Shift_JIS">Shift-JIS</option>
+                    </select>
+                </div>
+                <input
+                    type="file"
+                    id="dirInput"
+                    webkitdirectory
+                    style="display: none"
+                />
+                <input
+                    type="file"
+                    id="fileInput"
+                    multiple
+                    accept=".csv"
+                    style="display: none"
+                />
+                <div id="loadMsg" style="font-size: 0.85rem; color: #666"></div>
+            </div>
 
-<div class="container">
+            <div class="card">
+                <h2>📦 商品リスト</h2>
+                <div id="productSummary" class="product-summary"></div>
+                <div class="cb-actions" id="cbActions" style="display: none">
+                    <button class="btn-sm" onclick="selectAll(true)">
+                        ✅ 全選択
+                    </button>
+                    <button class="btn-sm" onclick="selectAll(false)">
+                        ⬜ 全解除
+                    </button>
+                    <button class="btn-sm" onclick="toggleExpandAll(true)">
+                        🔽 全て展開
+                    </button>
+                    <button class="btn-sm" onclick="toggleExpandAll(false)">
+                        🔼 全て折畳
+                    </button>
+                </div>
+                <div class="category-list" id="categoryList">
+                    <div class="no-data" id="noData">
+                        CSVファイルを読み込んでください
+                    </div>
+                </div>
+            </div>
 
-  <div class="card">
-    <h2>📂 CSVファイル読み込み</h2>
-    <div id="serverBanner" class="server-banner loading" style="display:none"></div>
-    <div class="drop-zone" id="dropZone" onclick="document.getElementById('dirInput').click()">
-      <div class="icon">📁</div>
-      <p>CSVファイルまたはフォルダをここにドラッグ＆ドロップ</p>
-      <p style="font-size:.8rem;margin-top:4px">またはクリック／下のボタンから選択</p>
-    </div>
-    <div class="file-controls">
-      <button class="btn" onclick="document.getElementById('dirInput').click()">📁 フォルダ選択</button>
-      <button class="btn" onclick="document.getElementById('fileInput').click()">📄 ファイル選択</button>
-      <button class="btn" onclick="reloadFromServer()">🔄 サーバー再読込</button>
-      <button class="btn sample" onclick="loadSampleData()">💡 サンプルデータ</button>
-      <button class="btn danger" onclick="clearAllData()">🗑 クリア</button>
-      <label style="font-size:.85rem;color:#666">文字コード:</label>
-      <select id="encoding"><option value="UTF-8">UTF-8</option><option value="Shift_JIS">Shift-JIS</option></select>
-    </div>
-    <input type="file" id="dirInput" webkitdirectory style="display:none">
-    <input type="file" id="fileInput" multiple accept=".csv" style="display:none">
-    <div id="loadMsg" style="font-size:.85rem;color:#666"></div>
-  </div>
+            <div class="card">
+                <h2>🔍 検索条件</h2>
+                <div class="input-row">
+                    <label for="target">目標金額（円）:</label>
+                    <input
+                        type="number"
+                        id="target"
+                        min="1"
+                        value="1000"
+                        placeholder="例: 1000"
+                    />
+                    <button
+                        class="btn-calc"
+                        id="btnCalc"
+                        onclick="startSearch()"
+                    >
+                        計算する
+                    </button>
+                </div>
+                <div id="errMsg" class="err-msg"></div>
+            </div>
 
-  <div class="card">
-    <h2>📦 商品リスト</h2>
-    <div id="productSummary" class="product-summary"></div>
-    <div class="cb-actions" id="cbActions" style="display:none">
-      <button class="btn-sm" onclick="selectAll(true)">✅ 全選択</button>
-      <button class="btn-sm" onclick="selectAll(false)">⬜ 全解除</button>
-      <button class="btn-sm" onclick="toggleExpandAll(true)">🔽 全て展開</button>
-      <button class="btn-sm" onclick="toggleExpandAll(false)">🔼 全て折畳</button>
-    </div>
-    <div class="category-list" id="categoryList">
-      <div class="no-data" id="noData">CSVファイルを読み込んでください</div>
-    </div>
-  </div>
+            <div class="card">
+                <h2>📊 結果</h2>
+                <div id="statusBar" class="status-bar idle">
+                    商品を読み込んで「計算する」を押してください
+                </div>
+                <div
+                    class="sort-controls"
+                    id="sortControls"
+                    style="display: none"
+                >
+                    <label>並び順（商品数）:</label>
+                    <button
+                        class="sort-btn active"
+                        id="sortAsc"
+                        onclick="setSortOrder('asc')"
+                    >
+                        ▲ 少ない順
+                    </button>
+                    <button
+                        class="sort-btn"
+                        id="sortDesc"
+                        onclick="setSortOrder('desc')"
+                    >
+                        ▼ 多い順
+                    </button>
+                </div>
+                <div class="result-list" id="resultList"></div>
+            </div>
+        </div>
 
-  <div class="card">
-    <h2>🔍 検索条件</h2>
-    <div class="input-row">
-      <label for="target">目標金額（円）:</label>
-      <input type="number" id="target" min="1" value="1000" placeholder="例: 1000">
-      <button class="btn-calc" id="btnCalc" onclick="startSearch()">計算する</button>
-    </div>
-    <div id="errMsg" class="err-msg"></div>
-  </div>
-
-  <div class="card">
-    <h2>📊 結果</h2>
-    <div id="statusBar" class="status-bar idle">商品を読み込んで「計算する」を押してください</div>
-    <div class="sort-controls" id="sortControls" style="display:none">
-      <label>並び順（商品数）:</label>
-      <button class="sort-btn active" id="sortAsc" onclick="setSortOrder('asc')">▲ 少ない順</button>
-      <button class="sort-btn" id="sortDesc" onclick="setSortOrder('desc')">▼ 多い順</button>
-    </div>
-    <div class="result-list" id="resultList"></div>
-  </div>
-</div>
-
-<script>
-/* ==============================================
+        <script>
+            /* ==============================================
    設定
    ============================================== */
-const CSV_DIR     = './csv/';
-const CSV_INDEX   = CSV_DIR + 'index.json';
-const MAX_RESULTS = 5000;
+            const CSV_DIR = "./csv/";
+            const CSV_INDEX = CSV_DIR + "index.json";
+            const MAX_RESULTS = 5000;
 
-/* ==============================================
+            /* ==============================================
    グローバル状態
    ============================================== */
-let categories     = [];
-let currentResults = [];
-let currentSort    = 'asc';
+            let categories = [];
+            let currentResults = [];
+            let currentSort = "asc";
 
-/* ==============================================
+            /* ==============================================
    DOM
    ============================================== */
-const dropZone       = document.getElementById('dropZone');
-const dirInput       = document.getElementById('dirInput');
-const fileInput      = document.getElementById('fileInput');
-const encodingSel    = document.getElementById('encoding');
-const loadMsg        = document.getElementById('loadMsg');
-const categoryListEl = document.getElementById('categoryList');
-const noDataEl       = document.getElementById('noData');
-const cbActionsEl    = document.getElementById('cbActions');
-const summaryEl      = document.getElementById('productSummary');
-const serverBanner   = document.getElementById('serverBanner');
-const sortControlsEl = document.getElementById('sortControls');
+            const dropZone = document.getElementById("dropZone");
+            const dirInput = document.getElementById("dirInput");
+            const fileInput = document.getElementById("fileInput");
+            const encodingSel = document.getElementById("encoding");
+            const loadMsg = document.getElementById("loadMsg");
+            const categoryListEl = document.getElementById("categoryList");
+            const noDataEl = document.getElementById("noData");
+            const cbActionsEl = document.getElementById("cbActions");
+            const summaryEl = document.getElementById("productSummary");
+            const serverBanner = document.getElementById("serverBanner");
+            const sortControlsEl = document.getElementById("sortControls");
 
-/* ==============================================
+            /* ==============================================
    ページ読み込み時
    ============================================== */
-window.addEventListener('DOMContentLoaded', () => {
-  renderCategories();
-  loadFromServer();
-});
+            window.addEventListener("DOMContentLoaded", () => {
+                renderCategories();
+                loadFromServer();
+            });
 
-/* ==============================================
+            /* ==============================================
    サーバーCSV自動読み込み
    ============================================== */
-async function loadFromServer() {
-  serverBanner.style.display = 'flex';
-  serverBanner.className = 'server-banner loading';
-  serverBanner.innerHTML = '<div class="mini-spinner"></div> サーバーからCSVファイルを読み込み中…';
-  try {
-    const res = await fetch(CSV_INDEX);
-    if (!res.ok) throw new Error(`index.json: ${res.status}`);
-    const fileList = await res.json();
-    if (!Array.isArray(fileList) || !fileList.length) throw new Error('ファイル一覧が空です');
-    let ok = 0, ng = 0;
-    for (const fileName of fileList) {
-      try {
-        const csvRes = await fetch(CSV_DIR + encodeURIComponent(fileName));
-        if (!csvRes.ok) { ng++; continue; }
-        const text = await csvRes.text();
-        const catName = fileName.replace(/\.csv$/i, '');
-        const products = parseCSV(text);
-        if (!products.length) { ng++; continue; }
-        const idx = categories.findIndex(c => c.name === catName);
-        const cat = buildCategory(catName, products);
-        idx >= 0 ? (categories[idx] = cat) : categories.push(cat);
-        ok++;
-      } catch { ng++; }
-    }
-    serverBanner.className = 'server-banner success';
-    serverBanner.innerHTML = `✅ サーバーから ${ok} ファイル読み込み完了` + (ng ? ` （${ng}件スキップ）` : '');
-    renderCategories();
-  } catch (e) {
-    serverBanner.className = 'server-banner fail';
-    serverBanner.innerHTML = `⚠ サーバー読み込み不可（${e.message}）— 手動でCSVを追加するかサンプルデータをお使いください`;
-  }
-}
-async function reloadFromServer() { categories = []; renderCategories(); await loadFromServer(); }
+            async function loadFromServer() {
+                serverBanner.style.display = "flex";
+                serverBanner.className = "server-banner loading";
+                serverBanner.innerHTML =
+                    '<div class="mini-spinner"></div> サーバーからCSVファイルを読み込み中…';
+                try {
+                    const res = await fetch(CSV_INDEX);
+                    if (!res.ok) throw new Error(`index.json: ${res.status}`);
+                    const fileList = await res.json();
+                    if (!Array.isArray(fileList) || !fileList.length)
+                        throw new Error("ファイル一覧が空です");
+                    let ok = 0,
+                        ng = 0;
+                    for (const fileName of fileList) {
+                        try {
+                            const csvRes = await fetch(
+                                CSV_DIR + encodeURIComponent(fileName),
+                            );
+                            if (!csvRes.ok) {
+                                ng++;
+                                continue;
+                            }
+                            const text = await csvRes.text();
+                            const catName = fileName.replace(/\.csv$/i, "");
+                            const products = parseCSV(text);
+                            if (!products.length) {
+                                ng++;
+                                continue;
+                            }
+                            const idx = categories.findIndex(
+                                (c) => c.name === catName,
+                            );
+                            const cat = buildCategory(catName, products);
+                            idx >= 0
+                                ? (categories[idx] = cat)
+                                : categories.push(cat);
+                            ok++;
+                        } catch {
+                            ng++;
+                        }
+                    }
+                    serverBanner.className = "server-banner success";
+                    serverBanner.innerHTML =
+                        `✅ サーバーから ${ok} ファイル読み込み完了` +
+                        (ng ? ` （${ng}件スキップ）` : "");
+                    renderCategories();
+                } catch (e) {
+                    serverBanner.className = "server-banner fail";
+                    serverBanner.innerHTML = `⚠ サーバー読み込み不可（${e.message}）— 手動でCSVを追加するかサンプルデータをお使いください`;
+                }
+            }
+            async function reloadFromServer() {
+                categories = [];
+                renderCategories();
+                await loadFromServer();
+            }
 
-/* ==============================================
+            /* ==============================================
    ローカルファイル入力
    ============================================== */
-dirInput.addEventListener('change', e => {
-  const files = [...e.target.files].filter(f => f.name.toLowerCase().endsWith('.csv'));
-  files.length ? processLocalFiles(files) : (loadMsg.textContent = '⚠ CSVファイルが見つかりませんでした。');
-  dirInput.value = '';
-});
-fileInput.addEventListener('change', e => {
-  if (e.target.files.length) processLocalFiles([...e.target.files]);
-  fileInput.value = '';
-});
+            dirInput.addEventListener("change", (e) => {
+                const files = [...e.target.files].filter((f) =>
+                    f.name.toLowerCase().endsWith(".csv"),
+                );
+                files.length
+                    ? processLocalFiles(files)
+                    : (loadMsg.textContent =
+                          "⚠ CSVファイルが見つかりませんでした。");
+                dirInput.value = "";
+            });
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files.length)
+                    processLocalFiles([...e.target.files]);
+                fileInput.value = "";
+            });
 
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', async e => {
-  e.preventDefault(); dropZone.classList.remove('drag-over');
-  const collected = [];
-  const entries = [...(e.dataTransfer.items || [])].map(i => i.webkitGetAsEntry ? i.webkitGetAsEntry() : null).filter(Boolean);
-  if (entries.length) { for (const en of entries) await collectCSV(en, collected); }
-  else [...e.dataTransfer.files].forEach(f => { if (f.name.toLowerCase().endsWith('.csv')) collected.push(f); });
-  collected.length ? processLocalFiles(collected) : (loadMsg.textContent = '⚠ CSVファイルが見つかりませんでした。');
-});
+            dropZone.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                dropZone.classList.add("drag-over");
+            });
+            dropZone.addEventListener("dragleave", () =>
+                dropZone.classList.remove("drag-over"),
+            );
+            dropZone.addEventListener("drop", async (e) => {
+                e.preventDefault();
+                dropZone.classList.remove("drag-over");
+                const collected = [];
+                const entries = [...(e.dataTransfer.items || [])]
+                    .map((i) =>
+                        i.webkitGetAsEntry ? i.webkitGetAsEntry() : null,
+                    )
+                    .filter(Boolean);
+                if (entries.length) {
+                    for (const en of entries) await collectCSV(en, collected);
+                } else
+                    [...e.dataTransfer.files].forEach((f) => {
+                        if (f.name.toLowerCase().endsWith(".csv"))
+                            collected.push(f);
+                    });
+                collected.length
+                    ? processLocalFiles(collected)
+                    : (loadMsg.textContent =
+                          "⚠ CSVファイルが見つかりませんでした。");
+            });
 
-function collectCSV(entry, files) {
-  return new Promise(resolve => {
-    if (entry.isFile) { entry.file(f => { if (f.name.toLowerCase().endsWith('.csv')) files.push(f); resolve(); }); }
-    else if (entry.isDirectory) { entry.createReader().readEntries(async entries => { for (const e of entries) await collectCSV(e, files); resolve(); }); }
-    else resolve();
-  });
-}
+            function collectCSV(entry, files) {
+                return new Promise((resolve) => {
+                    if (entry.isFile) {
+                        entry.file((f) => {
+                            if (f.name.toLowerCase().endsWith(".csv"))
+                                files.push(f);
+                            resolve();
+                        });
+                    } else if (entry.isDirectory) {
+                        entry.createReader().readEntries(async (entries) => {
+                            for (const e of entries) await collectCSV(e, files);
+                            resolve();
+                        });
+                    } else resolve();
+                });
+            }
 
-async function processLocalFiles(files) {
-  const enc = encodingSel.value; let ok = 0, ng = 0;
-  for (const file of files) {
-    try {
-      const text = await readLocalText(file, enc);
-      const catName = file.name.replace(/\.csv$/i, '');
-      const products = parseCSV(text);
-      if (!products.length) { ng++; continue; }
-      const idx = categories.findIndex(c => c.name === catName);
-      const cat = buildCategory(catName, products);
-      idx >= 0 ? (categories[idx] = cat) : categories.push(cat);
-      ok++;
-    } catch { ng++; }
-  }
-  loadMsg.textContent = `✅ ${ok}件読み込み` + (ng ? ` （${ng}件スキップ）` : '');
-  renderCategories();
-}
+            async function processLocalFiles(files) {
+                const enc = encodingSel.value;
+                let ok = 0,
+                    ng = 0;
+                for (const file of files) {
+                    try {
+                        const text = await readLocalText(file, enc);
+                        const catName = file.name.replace(/\.csv$/i, "");
+                        const products = parseCSV(text);
+                        if (!products.length) {
+                            ng++;
+                            continue;
+                        }
+                        const idx = categories.findIndex(
+                            (c) => c.name === catName,
+                        );
+                        const cat = buildCategory(catName, products);
+                        idx >= 0
+                            ? (categories[idx] = cat)
+                            : categories.push(cat);
+                        ok++;
+                    } catch {
+                        ng++;
+                    }
+                }
+                loadMsg.textContent =
+                    `✅ ${ok}件読み込み` + (ng ? ` （${ng}件スキップ）` : "");
+                renderCategories();
+            }
 
-function readLocalText(file, enc) {
-  return new Promise((res, rej) => {
-    const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error);
-    r.readAsText(file, enc);
-  });
-}
+            function readLocalText(file, enc) {
+                return new Promise((res, rej) => {
+                    const r = new FileReader();
+                    r.onload = () => res(r.result);
+                    r.onerror = () => rej(r.error);
+                    r.readAsText(file, enc);
+                });
+            }
 
-/* ==============================================
+            /* ==============================================
    CSV パース  ★3列目対応
    フォーマット: 商品名, 金額, 有効フラグ(1/0)
    3列目省略時はデフォルト有効(1)
    ============================================== */
-function parseCSV(text) {
-  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-  const out = [];
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim(); if (!line) continue;
-    const parts = splitCSV(line); if (parts.length < 2) continue;
-    const name  = parts[0].trim();
-    const price = parseInt(parts[1].trim(), 10);
-    if (!name || isNaN(price) || price <= 0) continue;
+            function parseCSV(text) {
+                if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+                const out = [];
+                for (const raw of text.split(/\r?\n/)) {
+                    const line = raw.trim();
+                    if (!line) continue;
+                    const parts = splitCSV(line);
+                    if (parts.length < 2) continue;
+                    const name = parts[0].trim();
+                    const price = parseInt(parts[1].trim(), 10);
+                    if (!name || isNaN(price) || price <= 0) continue;
 
-    // ★ 3列目: 1=有効, 0=無効, 省略=有効
-    let enabled = true;
-    if (parts.length >= 3) {
-      const flag = parts[2].trim();
-      if (flag === '0') enabled = false;
-    }
+                    // ★ 3列目: 1=有効, 0=無効, 省略=有効
+                    let enabled = true;
+                    if (parts.length >= 3) {
+                        const flag = parts[2].trim();
+                        if (flag === "0") enabled = false;
+                    }
 
-    out.push({ name, price, checked: enabled });
-  }
-  return out;
-}
+                    out.push({ name, price, checked: enabled });
+                }
+                return out;
+            }
 
-function splitCSV(line) {
-  const r = []; let cur = '', q = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (q) { if (c === '"') { if (line[i+1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
-    else { if (c === '"') q = true; else if (c === ',') { r.push(cur); cur = ''; } else cur += c; }
-  }
-  r.push(cur); return r;
-}
+            function splitCSV(line) {
+                const r = [];
+                let cur = "",
+                    q = false;
+                for (let i = 0; i < line.length; i++) {
+                    const c = line[i];
+                    if (q) {
+                        if (c === '"') {
+                            if (line[i + 1] === '"') {
+                                cur += '"';
+                                i++;
+                            } else q = false;
+                        } else cur += c;
+                    } else {
+                        if (c === '"') q = true;
+                        else if (c === ",") {
+                            r.push(cur);
+                            cur = "";
+                        } else cur += c;
+                    }
+                }
+                r.push(cur);
+                return r;
+            }
 
-/* ==============================================
+            /* ==============================================
    カテゴリ生成ヘルパー
    商品の checked 状態からカテゴリの checked を自動判定
    ============================================== */
-function buildCategory(name, products) {
-  const allChecked = products.every(p => p.checked);
-  return {
-    name,
-    checked: allChecked,
-    expanded: true,
-    products: products  // checked は parseCSV で設定済み
-  };
-}
+            function buildCategory(name, products) {
+                const allChecked = products.every((p) => p.checked);
+                return {
+                    name,
+                    checked: allChecked,
+                    expanded: true,
+                    products: products, // checked は parseCSV で設定済み
+                };
+            }
 
-/* ==============================================
+            /* ==============================================
    サンプルデータ（3列目相当の checked 付き）
    ============================================== */
-function loadSampleData() {
-  categories = [
-    { name:'おにぎり', checked:true, expanded:true, products:[
-      {name:'鮭おにぎり',price:130,checked:true},
-      {name:'梅おにぎり',price:120,checked:true},
-      {name:'ツナマヨおにぎり',price:140,checked:true},
-      {name:'昆布おにぎり',price:120,checked:false},   // 0相当
-      {name:'明太子おにぎり',price:150,checked:true}]},
-    { name:'お弁当', checked:true, expanded:true, products:[
-      {name:'幕の内弁当',price:498,checked:true},
-      {name:'カツ丼弁当',price:530,checked:true},
-      {name:'のり弁当',price:398,checked:true},
-      {name:'焼肉弁当',price:580,checked:false}]},     // 0相当
-    { name:'パン・サンドイッチ', checked:true, expanded:true, products:[
-      {name:'サンドイッチ',price:298,checked:true},
-      {name:'たまごサンド',price:248,checked:true},
-      {name:'メロンパン',price:140,checked:true},
-      {name:'カレーパン',price:160,checked:true}]},
-    { name:'麺類', checked:true, expanded:true, products:[
-      {name:'カップ麺(醤油)',price:198,checked:true},
-      {name:'カップ麺(味噌)',price:220,checked:true},
-      {name:'カップ焼きそば',price:210,checked:true}]},
-    { name:'ドリンク', checked:true, expanded:true, products:[
-      {name:'コーラ500ml',price:160,checked:true},
-      {name:'お茶500ml',price:130,checked:true},
-      {name:'水500ml',price:100,checked:true},
-      {name:'コーヒー缶',price:130,checked:true},
-      {name:'エナジードリンク',price:210,checked:true},
-      {name:'オレンジジュース',price:150,checked:true},
-      {name:'牛乳200ml',price:110,checked:true}]},
-    { name:'お菓子', checked:true, expanded:true, products:[
-      {name:'ポテトチップス',price:168,checked:true},
-      {name:'チョコレート',price:198,checked:true},
-      {name:'ガム',price:128,checked:true},
-      {name:'キャンディ',price:98,checked:true},
-      {name:'グミ',price:148,checked:true},
-      {name:'ビスケット',price:178,checked:true}]},
-    { name:'ホットスナック', checked:true, expanded:true, products:[
-      {name:'肉まん',price:150,checked:true},
-      {name:'あんまん',price:140,checked:true},
-      {name:'フランクフルト',price:180,checked:true},
-      {name:'からあげ棒',price:170,checked:true}]},
-    { name:'おでん', checked:true, expanded:true, products:[
-      {name:'おでん(大根)',price:90,checked:true},
-      {name:'おでん(たまご)',price:100,checked:true},
-      {name:'おでん(ちくわ)',price:80,checked:true}]},
-    { name:'デザート・その他', checked:true, expanded:true, products:[
-      {name:'アイスクリーム',price:250,checked:true},
-      {name:'ヨーグルト',price:138,checked:true},
-      {name:'バナナ',price:120,checked:true},
-      {name:'サラダ',price:268,checked:true},
-      {name:'プリン',price:188,checked:true}]}
-  ];
-  // カテゴリの checked を商品状態から再計算
-  categories.forEach(c => c.checked = c.products.every(p => p.checked));
-  loadMsg.textContent = '💡 サンプルデータを読み込みました。';
-  renderCategories();
-}
+            function loadSampleData() {
+                categories = [
+                    {
+                        name: "おにぎり",
+                        checked: true,
+                        expanded: true,
+                        products: [
+                            { name: "鮭おにぎり", price: 130, checked: true },
+                            { name: "梅おにぎり", price: 120, checked: true },
+                            {
+                                name: "ツナマヨおにぎり",
+                                price: 140,
+                                checked: true,
+                            },
+                            {
+                                name: "昆布おにぎり",
+                                price: 120,
+                                checked: false,
+                            }, // 0相当
+                            {
+                                name: "明太子おにぎり",
+                                price: 150,
+                                checked: true,
+                            },
+                        ],
+                    },
+                    {
+                        name: "お弁当",
+                        checked: true,
+                        expanded: true,
+                        products: [
+                            { name: "幕の内弁当", price: 498, checked: true },
+                            { name: "カツ丼弁当", price: 530, checked: true },
+                            { name: "のり弁当", price: 398, checked: true },
+                            { name: "焼肉弁当", price: 580, checked: false },
+                        ],
+                    }, // 0相当
+                    {
+                        name: "パン・サンドイッチ",
+                        checked: true,
+                        expanded: true,
+                        products: [
+                            { name: "サンドイッチ", price: 298, checked: true },
+                            { name: "たまごサンド", price: 248, checked: true },
+                            { name: "メロンパン", price: 140, checked: true },
+                            { name: "カレーパン", price: 160, checked: true },
+                        ],
+                    },
+                    {
+                        name: "麺類",
+                        checked: true,
+                        expanded: true,
+                        products: [
+                            {
+                                name: "カップ麺(醤油)",
+                                price: 198,
+                                checked: true,
+                            },
+                            {
+                                name: "カップ麺(味噌)",
+                                price: 220,
+                                checked: true,
+                            },
+                            {
+                                name: "カップ焼きそば",
+                                price: 210,
+                                checked: true,
+                            },
+                        ],
+                    },
+                    {
+                        name: "ドリンク",
+                        checked: true,
+                        expanded: true,
+                        products: [
+                            { name: "コーラ500ml", price: 160, checked: true },
+                            { name: "お茶500ml", price: 130, checked: true },
+                            { name: "水500ml", price: 100, checked: true },
+                            { name: "コーヒー缶", price: 130, checked: true },
+                            {
+                                name: "エナジードリンク",
+                                price: 210,
+                                checked: true,
+                            },
+                            {
+                                name: "オレンジジュース",
+                                price: 150,
+                                checked: true,
+                            },
+                            { name: "牛乳200ml", price: 110, checked: true },
+                        ],
+                    },
+                    {
+                        name: "お菓子",
+                        checked: true,
+                        expanded: true,
+                        products: [
+                            {
+                                name: "ポテトチップス",
+                                price: 168,
+                                checked: true,
+                            },
+                            { name: "チョコレート", price: 198, checked: true },
+                            { name: "ガム", price: 128, checked: true },
+                            { name: "キャンディ", price: 98, checked: true },
+                            { name: "グミ", price: 148, checked: true },
+                            { name: "ビスケット", price: 178, checked: true },
+                        ],
+                    },
+                    {
+                        name: "ホットスナック",
+                        checked: true,
+                        expanded: true,
+                        products: [
+                            { name: "肉まん", price: 150, checked: true },
+                            { name: "あんまん", price: 140, checked: true },
+                            {
+                                name: "フランクフルト",
+                                price: 180,
+                                checked: true,
+                            },
+                            { name: "からあげ棒", price: 170, checked: true },
+                        ],
+                    },
+                    {
+                        name: "おでん",
+                        checked: true,
+                        expanded: true,
+                        products: [
+                            { name: "おでん(大根)", price: 90, checked: true },
+                            {
+                                name: "おでん(たまご)",
+                                price: 100,
+                                checked: true,
+                            },
+                            {
+                                name: "おでん(ちくわ)",
+                                price: 80,
+                                checked: true,
+                            },
+                        ],
+                    },
+                    {
+                        name: "デザート・その他",
+                        checked: true,
+                        expanded: true,
+                        products: [
+                            {
+                                name: "アイスクリーム",
+                                price: 250,
+                                checked: true,
+                            },
+                            { name: "ヨーグルト", price: 138, checked: true },
+                            { name: "バナナ", price: 120, checked: true },
+                            { name: "サラダ", price: 268, checked: true },
+                            { name: "プリン", price: 188, checked: true },
+                        ],
+                    },
+                ];
+                // カテゴリの checked を商品状態から再計算
+                categories.forEach(
+                    (c) => (c.checked = c.products.every((p) => p.checked)),
+                );
+                loadMsg.textContent = "💡 サンプルデータを読み込みました。";
+                renderCategories();
+            }
 
-/* ==============================================
+            /* ==============================================
    データ操作
    ============================================== */
-function clearAllData() { categories = []; loadMsg.textContent = ''; renderCategories(); }
-function selectAll(v) { categories.forEach(c => { c.checked = v; c.products.forEach(p => p.checked = v); }); renderCategories(); }
-function toggleExpandAll(v) { categories.forEach(c => c.expanded = v); renderCategories(); }
+            function clearAllData() {
+                categories = [];
+                loadMsg.textContent = "";
+                renderCategories();
+            }
+            function selectAll(v) {
+                categories.forEach((c) => {
+                    c.checked = v;
+                    c.products.forEach((p) => (p.checked = v));
+                });
+                renderCategories();
+            }
+            function toggleExpandAll(v) {
+                categories.forEach((c) => (c.expanded = v));
+                renderCategories();
+            }
 
-/* ==============================================
+            /* ==============================================
    カテゴリ描画
    ============================================== */
-function renderCategories() {
-  categoryListEl.querySelectorAll('.category-panel').forEach(p => p.remove());
-  if (!categories.length) { noDataEl.style.display = 'block'; cbActionsEl.style.display = 'none'; summaryEl.textContent = ''; return; }
-  noDataEl.style.display = 'none'; cbActionsEl.style.display = 'flex';
-  let total = 0, checked = 0;
-  categories.forEach(c => { total += c.products.length; checked += c.products.filter(p => p.checked).length; });
-  summaryEl.textContent = `${categories.length} カテゴリ ／ ${total} 品中 ${checked} 品を選択中`;
+            function renderCategories() {
+                categoryListEl
+                    .querySelectorAll(".category-panel")
+                    .forEach((p) => p.remove());
+                if (!categories.length) {
+                    noDataEl.style.display = "block";
+                    cbActionsEl.style.display = "none";
+                    summaryEl.textContent = "";
+                    return;
+                }
+                noDataEl.style.display = "none";
+                cbActionsEl.style.display = "flex";
+                let total = 0,
+                    checked = 0;
+                categories.forEach((c) => {
+                    total += c.products.length;
+                    checked += c.products.filter((p) => p.checked).length;
+                });
+                summaryEl.textContent = `${categories.length} カテゴリ ／ ${total} 品中 ${checked} 品を選択中`;
 
-  categories.forEach((cat, ci) => {
-    const panel = document.createElement('div'); panel.className = 'category-panel';
-    const hdr = document.createElement('div'); hdr.className = 'category-header';
-    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'cat-cb';
-    const allC = cat.products.every(p => p.checked), noneC = cat.products.every(p => !p.checked);
-    cb.checked = allC; cb.indeterminate = !allC && !noneC;
-    cb.addEventListener('click', e => e.stopPropagation());
-    cb.addEventListener('change', e => { e.stopPropagation(); toggleCategory(ci); });
-    const nm = document.createElement('span'); nm.className = 'cat-name'; nm.textContent = cat.name;
-    const cnt = document.createElement('span'); cnt.className = 'cat-count';
-    cnt.textContent = `(${cat.products.filter(p => p.checked).length}/${cat.products.length}品)`;
-    const tgl = document.createElement('span'); tgl.className = 'cat-toggle' + (cat.expanded ? ' open' : ''); tgl.textContent = '▼';
-    hdr.append(cb, nm, cnt, tgl);
-    hdr.addEventListener('click', () => { cat.expanded = !cat.expanded; renderCategories(); });
+                categories.forEach((cat, ci) => {
+                    const panel = document.createElement("div");
+                    panel.className = "category-panel";
+                    const hdr = document.createElement("div");
+                    hdr.className = "category-header";
+                    const cb = document.createElement("input");
+                    cb.type = "checkbox";
+                    cb.className = "cat-cb";
+                    const allC = cat.products.every((p) => p.checked),
+                        noneC = cat.products.every((p) => !p.checked);
+                    cb.checked = allC;
+                    cb.indeterminate = !allC && !noneC;
+                    cb.addEventListener("click", (e) => e.stopPropagation());
+                    cb.addEventListener("change", (e) => {
+                        e.stopPropagation();
+                        toggleCategory(ci);
+                    });
+                    const nm = document.createElement("span");
+                    nm.className = "cat-name";
+                    nm.textContent = cat.name;
+                    const cnt = document.createElement("span");
+                    cnt.className = "cat-count";
+                    cnt.textContent = `(${cat.products.filter((p) => p.checked).length}/${cat.products.length}品)`;
+                    const tgl = document.createElement("span");
+                    tgl.className =
+                        "cat-toggle" + (cat.expanded ? " open" : "");
+                    tgl.textContent = "▼";
+                    hdr.append(cb, nm, cnt, tgl);
+                    hdr.addEventListener("click", () => {
+                        cat.expanded = !cat.expanded;
+                        renderCategories();
+                    });
 
-    const body = document.createElement('div'); body.className = 'category-body' + (cat.expanded ? ' expanded' : '');
-    cat.products.forEach((prod, pi) => {
-      const row = document.createElement('div'); row.className = 'product-row';
-      const pcb = document.createElement('input'); pcb.type = 'checkbox'; pcb.checked = prod.checked;
-      pcb.addEventListener('change', () => toggleProduct(ci, pi));
-      const pn = document.createElement('span'); pn.className = 'prod-name'; pn.textContent = prod.name;
-      const pp = document.createElement('span'); pp.className = 'prod-price'; pp.textContent = `¥${prod.price.toLocaleString()}`;
-      row.append(pcb, pn, pp); body.appendChild(row);
-    });
-    panel.append(hdr, body); categoryListEl.appendChild(panel);
-  });
-}
+                    const body = document.createElement("div");
+                    body.className =
+                        "category-body" + (cat.expanded ? " expanded" : "");
+                    cat.products.forEach((prod, pi) => {
+                        const row = document.createElement("div");
+                        row.className = "product-row";
+                        const pcb = document.createElement("input");
+                        pcb.type = "checkbox";
+                        pcb.checked = prod.checked;
+                        pcb.addEventListener("change", () =>
+                            toggleProduct(ci, pi),
+                        );
+                        const pn = document.createElement("span");
+                        pn.className = "prod-name";
+                        pn.textContent = prod.name;
+                        const pp = document.createElement("span");
+                        pp.className = "prod-price";
+                        pp.textContent = `¥${prod.price.toLocaleString()}`;
+                        row.append(pcb, pn, pp);
+                        body.appendChild(row);
+                    });
+                    panel.append(hdr, body);
+                    categoryListEl.appendChild(panel);
+                });
+            }
 
-function toggleCategory(ci) {
-  const c = categories[ci]; const next = !c.products.every(p => p.checked);
-  c.checked = next; c.products.forEach(p => p.checked = next); renderCategories();
-}
-function toggleProduct(ci, pi) {
-  const c = categories[ci]; c.products[pi].checked = !c.products[pi].checked;
-  c.checked = c.products.every(p => p.checked); renderCategories();
-}
+            function toggleCategory(ci) {
+                const c = categories[ci];
+                const next = !c.products.every((p) => p.checked);
+                c.checked = next;
+                c.products.forEach((p) => (p.checked = next));
+                renderCategories();
+            }
+            function toggleProduct(ci, pi) {
+                const c = categories[ci];
+                c.products[pi].checked = !c.products[pi].checked;
+                c.checked = c.products.every((p) => p.checked);
+                renderCategories();
+            }
 
-function getCheckedProducts() {
-  const out = [];
-  categories.forEach(c => c.products.forEach(p => { if (p.checked) out.push({ name: p.name, price: p.price }); }));
-  return out;
-}
+            function getCheckedProducts() {
+                const out = [];
+                categories.forEach((c) =>
+                    c.products.forEach((p) => {
+                        if (p.checked)
+                            out.push({ name: p.name, price: p.price });
+                    }),
+                );
+                return out;
+            }
 
-/* ==============================================
+            /* ==============================================
    バリデーション
    ============================================== */
-function validate() {
-  const errEl = document.getElementById('errMsg'); errEl.textContent = '';
-  const raw = document.getElementById('target').value.trim();
-  if (!raw) { errEl.textContent = '⚠ 目標金額を入力してください。'; return null; }
-  const v = Number(raw);
-  if (!Number.isInteger(v) || v <= 0) { errEl.textContent = '⚠ 正の整数を入力してください。'; return null; }
-  const products = getCheckedProducts();
-  if (!products.length) { errEl.textContent = '⚠ 商品が選択されていません。'; return null; }
-  return { target: v, products };
-}
+            function validate() {
+                const errEl = document.getElementById("errMsg");
+                errEl.textContent = "";
+                const raw = document.getElementById("target").value.trim();
+                if (!raw) {
+                    errEl.textContent = "⚠ 目標金額を入力してください。";
+                    return null;
+                }
+                const v = Number(raw);
+                if (!Number.isInteger(v) || v <= 0) {
+                    errEl.textContent = "⚠ 正の整数を入力してください。";
+                    return null;
+                }
+                const products = getCheckedProducts();
+                if (!products.length) {
+                    errEl.textContent = "⚠ 商品が選択されていません。";
+                    return null;
+                }
+                return { target: v, products };
+            }
 
-function setStatus(type, html) {
-  const bar = document.getElementById('statusBar');
-  bar.className = 'status-bar ' + type; bar.innerHTML = html;
-}
+            function setStatus(type, html) {
+                const bar = document.getElementById("statusBar");
+                bar.className = "status-bar " + type;
+                bar.innerHTML = html;
+            }
 
-/* ==============================================
+            /* ==============================================
    組み合わせ探索 (DFS)
    ============================================== */
-function findCombinations(items, target) {
-  const sorted = items.slice().sort((a, b) => a.price - b.price);
-  const results = []; let limitHit = false;
-  function dfs(idx, rem, cur) {
-    if (limitHit) return;
-    if (rem === 0) { results.push(cur.slice()); if (results.length >= MAX_RESULTS) limitHit = true; return; }
-    for (let i = idx; i < sorted.length; i++) {
-      if (sorted[i].price > rem) break;
-      cur.push(sorted[i]); dfs(i, rem - sorted[i].price, cur);
-      if (limitHit) return; cur.pop();
-    }
-  }
-  dfs(0, target, []);
-  return { results, limitHit };
-}
+            function findCombinations(items, target) {
+                const sorted = items.slice().sort((a, b) => a.price - b.price);
+                const results = [];
+                let limitHit = false;
+                function dfs(idx, rem, cur) {
+                    if (limitHit) return;
+                    if (rem === 0) {
+                        results.push(cur.slice());
+                        if (results.length >= MAX_RESULTS) limitHit = true;
+                        return;
+                    }
+                    for (let i = idx; i < sorted.length; i++) {
+                        if (sorted[i].price > rem) break;
+                        cur.push(sorted[i]);
+                        dfs(i, rem - sorted[i].price, cur);
+                        if (limitHit) return;
+                        cur.pop();
+                    }
+                }
+                dfs(0, target, []);
+                return { results, limitHit };
+            }
 
-function comboItemCount(combo) { return combo.length; }
+            function comboItemCount(combo) {
+                return combo.length;
+            }
 
-function formatCombo(combo) {
-  const m = new Map();
-  combo.forEach(p => m.set(p.name, (m.get(p.name) || 0) + 1));
-  return [...m].map(([n, c]) => `${n}×${c}`).join(', ');
-}
+            function formatCombo(combo) {
+                const m = new Map();
+                combo.forEach((p) => m.set(p.name, (m.get(p.name) || 0) + 1));
+                return [...m].map(([n, c]) => `${n}×${c}`).join(", ");
+            }
 
-/* ==============================================
+            /* ==============================================
    ソート & 結果描画
    ============================================== */
-function setSortOrder(order) {
-  currentSort = order;
-  document.getElementById('sortAsc').classList.toggle('active', order === 'asc');
-  document.getElementById('sortDesc').classList.toggle('active', order === 'desc');
-  renderResults();
-}
+            function setSortOrder(order) {
+                currentSort = order;
+                document
+                    .getElementById("sortAsc")
+                    .classList.toggle("active", order === "asc");
+                document
+                    .getElementById("sortDesc")
+                    .classList.toggle("active", order === "desc");
+                renderResults();
+            }
 
-function renderResults() {
-  const listEl = document.getElementById('resultList');
-  listEl.innerHTML = '';
-  if (!currentResults.length) return;
-  const sorted = currentResults.slice().sort((a, b) => {
-    const diff = comboItemCount(a) - comboItemCount(b);
-    return currentSort === 'asc' ? diff : -diff;
-  });
-  const frag = document.createDocumentFragment();
-  sorted.forEach((combo, i) => {
-    const count = comboItemCount(combo);
-    const d = document.createElement('div'); d.className = 'result-item';
-    d.innerHTML =
-      `<span class="idx">#${i + 1}</span>` +
-      `<span class="combo-detail">${formatCombo(combo)}</span>` +
-      `<span class="item-count">計${count}個</span>`;
-    frag.appendChild(d);
-  });
-  listEl.appendChild(frag);
-}
+            function renderResults() {
+                const listEl = document.getElementById("resultList");
+                listEl.innerHTML = "";
+                if (!currentResults.length) return;
+                const sorted = currentResults.slice().sort((a, b) => {
+                    const diff = comboItemCount(a) - comboItemCount(b);
+                    return currentSort === "asc" ? diff : -diff;
+                });
+                const frag = document.createDocumentFragment();
+                sorted.forEach((combo, i) => {
+                    const count = comboItemCount(combo);
+                    const d = document.createElement("div");
+                    d.className = "result-item";
+                    d.innerHTML =
+                        `<span class="idx">#${i + 1}</span>` +
+                        `<span class="combo-detail">${formatCombo(combo)}</span>` +
+                        `<span class="item-count">計${count}個</span>`;
+                    frag.appendChild(d);
+                });
+                listEl.appendChild(frag);
+            }
 
-/* ==============================================
+            /* ==============================================
    メイン検索
    ============================================== */
-function startSearch() {
-  const v = validate(); if (!v) return;
-  const btn = document.getElementById('btnCalc');
-  currentResults = [];
-  sortControlsEl.style.display = 'none';
-  document.getElementById('resultList').innerHTML = '';
-  btn.disabled = true;
-  setStatus('running', '<div class="spinner"></div> 計算中…');
+            function startSearch() {
+                const v = validate();
+                if (!v) return;
+                const btn = document.getElementById("btnCalc");
+                currentResults = [];
+                sortControlsEl.style.display = "none";
+                document.getElementById("resultList").innerHTML = "";
+                btn.disabled = true;
+                setStatus("running", '<div class="spinner"></div> 計算中…');
 
-  setTimeout(() => {
-    const t0 = performance.now();
-    const { results, limitHit } = findCombinations(v.products, v.target);
-    const ms = (performance.now() - t0).toFixed(1);
-    currentResults = results;
+                setTimeout(() => {
+                    const t0 = performance.now();
+                    const { results, limitHit } = findCombinations(
+                        v.products,
+                        v.target,
+                    );
+                    const ms = (performance.now() - t0).toFixed(1);
+                    currentResults = results;
 
-    if (!results.length) {
-      setStatus('idle', `該当する組み合わせはありませんでした（${ms}ms）`);
-    } else if (limitHit) {
-      setStatus('warn', `⚠ ${MAX_RESULTS.toLocaleString()}件で探索を中断しました（${ms}ms）`);
-    } else {
-      setStatus('done', `✅ <strong>${results.length.toLocaleString()}件</strong>の組み合わせが見つかりました（${ms}ms）`);
-    }
+                    if (!results.length) {
+                        setStatus(
+                            "idle",
+                            `該当する組み合わせはありませんでした（${ms}ms）`,
+                        );
+                    } else if (limitHit) {
+                        setStatus(
+                            "warn",
+                            `⚠ ${MAX_RESULTS.toLocaleString()}件で探索を中断しました（${ms}ms）`,
+                        );
+                    } else {
+                        setStatus(
+                            "done",
+                            `✅ <strong>${results.length.toLocaleString()}件</strong>の組み合わせが見つかりました（${ms}ms）`,
+                        );
+                    }
 
-    if (results.length) {
-      sortControlsEl.style.display = 'flex';
-      currentSort = 'asc';
-      document.getElementById('sortAsc').classList.add('active');
-      document.getElementById('sortDesc').classList.remove('active');
-      renderResults();
-    }
-    btn.disabled = false;
-  }, 50);
-}
+                    if (results.length) {
+                        sortControlsEl.style.display = "flex";
+                        currentSort = "asc";
+                        document
+                            .getElementById("sortAsc")
+                            .classList.add("active");
+                        document
+                            .getElementById("sortDesc")
+                            .classList.remove("active");
+                        renderResults();
+                    }
+                    btn.disabled = false;
+                }, 50);
+            }
 
-document.getElementById('target').addEventListener('keydown', e => { if (e.key === 'Enter') startSearch(); });
-</script>
-</body>
+            document
+                .getElementById("target")
+                .addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") startSearch();
+                });
+        </script>
+    </body>
 </html>
-```
-
----
-
-## 変更点
-
-| 箇所 | 内容 |
-|---|---|
-| **`parseCSV()`** | 3列目を読み取り、`0` なら `checked: false`、`1` または省略なら `checked: true` |
-| **`buildCategory()`** | 新規ヘルパー追加。配下商品の `checked` 状態からカテゴリの `checked` を自動計算 |
-| **後方互換** | 3列目がない既存CSVはすべて有効（`checked: true`）として読み込まれる |
-
-## CSVフォーマット例（`ドリンク.csv`）
-
-```csv
-コーラ500ml,160,1
-お茶500ml,130,1
-水500ml,100,0
-コーヒー缶,130,1
-エナジードリンク,210,0
-```
-
-この場合「水500ml」と「エナジードリンク」はチェックが外れた状態で読み込まれ、計算対象から除外されます。画面上でチェックを入れれば計算に含めることも可能です。
