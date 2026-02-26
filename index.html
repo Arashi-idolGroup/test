@@ -358,7 +358,6 @@
                 }
             }
 
-            /* ===== sort controls ===== */
             .sort-controls {
                 display: flex;
                 align-items: center;
@@ -448,7 +447,6 @@
         </div>
 
         <div class="container">
-            <!-- CSV読み込み -->
             <div class="card">
                 <h2>📂 CSVファイル読み込み</h2>
                 <div
@@ -513,7 +511,6 @@
                 <div id="loadMsg" style="font-size: 0.85rem; color: #666"></div>
             </div>
 
-            <!-- 商品リスト -->
             <div class="card">
                 <h2>📦 商品リスト</h2>
                 <div id="productSummary" class="product-summary"></div>
@@ -538,7 +535,6 @@
                 </div>
             </div>
 
-            <!-- 検索条件 -->
             <div class="card">
                 <h2>🔍 検索条件</h2>
                 <div class="input-row">
@@ -561,14 +557,11 @@
                 <div id="errMsg" class="err-msg"></div>
             </div>
 
-            <!-- 結果 -->
             <div class="card">
                 <h2>📊 結果</h2>
                 <div id="statusBar" class="status-bar idle">
                     商品を読み込んで「計算する」を押してください
                 </div>
-
-                <!-- ソート切替 -->
                 <div
                     class="sort-controls"
                     id="sortControls"
@@ -590,7 +583,6 @@
                         ▼ 多い順
                     </button>
                 </div>
-
                 <div class="result-list" id="resultList"></div>
             </div>
         </div>
@@ -607,8 +599,8 @@
    グローバル状態
    ============================================== */
             let categories = [];
-            let currentResults = []; // 計算結果を保持（再ソート用）
-            let currentSort = "asc"; // デフォルト昇順
+            let currentResults = [];
+            let currentSort = "asc";
 
             /* ==============================================
    DOM
@@ -668,15 +660,7 @@
                             const idx = categories.findIndex(
                                 (c) => c.name === catName,
                             );
-                            const cat = {
-                                name: catName,
-                                checked: true,
-                                expanded: true,
-                                products: products.map((p) => ({
-                                    ...p,
-                                    checked: true,
-                                })),
-                            };
+                            const cat = buildCategory(catName, products);
                             idx >= 0
                                 ? (categories[idx] = cat)
                                 : categories.push(cat);
@@ -782,15 +766,7 @@
                         const idx = categories.findIndex(
                             (c) => c.name === catName,
                         );
-                        const cat = {
-                            name: catName,
-                            checked: true,
-                            expanded: true,
-                            products: products.map((p) => ({
-                                ...p,
-                                checked: true,
-                            })),
-                        };
+                        const cat = buildCategory(catName, products);
                         idx >= 0
                             ? (categories[idx] = cat)
                             : categories.push(cat);
@@ -814,7 +790,9 @@
             }
 
             /* ==============================================
-   CSV パース
+   CSV パース  ★3列目対応
+   フォーマット: 商品名, 金額, 有効フラグ(1/0)
+   3列目省略時はデフォルト有効(1)
    ============================================== */
             function parseCSV(text) {
                 if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
@@ -827,10 +805,19 @@
                     const name = parts[0].trim();
                     const price = parseInt(parts[1].trim(), 10);
                     if (!name || isNaN(price) || price <= 0) continue;
-                    out.push({ name, price });
+
+                    // ★ 3列目: 1=有効, 0=無効, 省略=有効
+                    let enabled = true;
+                    if (parts.length >= 3) {
+                        const flag = parts[2].trim();
+                        if (flag === "0") enabled = false;
+                    }
+
+                    out.push({ name, price, checked: enabled });
                 }
                 return out;
             }
+
             function splitCSV(line) {
                 const r = [];
                 let cur = "",
@@ -857,7 +844,21 @@
             }
 
             /* ==============================================
-   サンプルデータ
+   カテゴリ生成ヘルパー
+   商品の checked 状態からカテゴリの checked を自動判定
+   ============================================== */
+            function buildCategory(name, products) {
+                const allChecked = products.every((p) => p.checked);
+                return {
+                    name,
+                    checked: allChecked,
+                    expanded: true,
+                    products: products, // checked は parseCSV で設定済み
+                };
+            }
+
+            /* ==============================================
+   サンプルデータ（3列目相当の checked 付き）
    ============================================== */
             function loadSampleData() {
                 categories = [
@@ -873,7 +874,11 @@
                                 price: 140,
                                 checked: true,
                             },
-                            { name: "昆布おにぎり", price: 120, checked: true },
+                            {
+                                name: "昆布おにぎり",
+                                price: 120,
+                                checked: false,
+                            }, // 0相当
                             {
                                 name: "明太子おにぎり",
                                 price: 150,
@@ -889,9 +894,9 @@
                             { name: "幕の内弁当", price: 498, checked: true },
                             { name: "カツ丼弁当", price: 530, checked: true },
                             { name: "のり弁当", price: 398, checked: true },
-                            { name: "焼肉弁当", price: 580, checked: true },
+                            { name: "焼肉弁当", price: 580, checked: false },
                         ],
-                    },
+                    }, // 0相当
                     {
                         name: "パン・サンドイッチ",
                         checked: true,
@@ -1014,6 +1019,10 @@
                         ],
                     },
                 ];
+                // カテゴリの checked を商品状態から再計算
+                categories.forEach(
+                    (c) => (c.checked = c.products.every((p) => p.checked)),
+                );
                 loadMsg.textContent = "💡 サンプルデータを読み込みました。";
                 renderCategories();
             }
@@ -1201,9 +1210,6 @@
                 return { results, limitHit };
             }
 
-            /* ==============================================
-   結果整形ヘルパー
-   ============================================== */
             function comboItemCount(combo) {
                 return combo.length;
             }
@@ -1232,13 +1238,10 @@
                 const listEl = document.getElementById("resultList");
                 listEl.innerHTML = "";
                 if (!currentResults.length) return;
-
-                // ソート（元配列を壊さないようコピー）
                 const sorted = currentResults.slice().sort((a, b) => {
                     const diff = comboItemCount(a) - comboItemCount(b);
                     return currentSort === "asc" ? diff : -diff;
                 });
-
                 const frag = document.createDocumentFragment();
                 sorted.forEach((combo, i) => {
                     const count = comboItemCount(combo);
@@ -1273,7 +1276,6 @@
                         v.target,
                     );
                     const ms = (performance.now() - t0).toFixed(1);
-
                     currentResults = results;
 
                     if (!results.length) {
@@ -1295,7 +1297,6 @@
 
                     if (results.length) {
                         sortControlsEl.style.display = "flex";
-                        // デフォルト昇順にリセット
                         currentSort = "asc";
                         document
                             .getElementById("sortAsc")
@@ -1305,7 +1306,6 @@
                             .classList.remove("active");
                         renderResults();
                     }
-
                     btn.disabled = false;
                 }, 50);
             }
